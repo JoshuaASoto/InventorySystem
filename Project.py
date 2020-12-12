@@ -1,6 +1,8 @@
 import os
 import csv
-import datetime
+from datetime import datetime
+import pandas as pd
+from pandas import DataFrame
 
 manlist = []
 pricelist = []
@@ -22,6 +24,7 @@ with open('ServiceDatesList.csv', 'r') as csvfile3:
     for i in servlist_reader:
         servlist.append(i)
 
+
 # 1.A) Full Inventory CSV
 # Combining CSVs
 full_list = manlist
@@ -33,7 +36,7 @@ for i in full_list:
         if i[0] == z[0]:
             i.insert(4, z[1])
 
-#print(full_list)
+print(full_list)
 
 # Sorting by Brand
 manlist.sort(key=lambda x: x[1])
@@ -50,6 +53,8 @@ laptoplist = []
 phonelist = []
 towerlist = []
 
+
+# Laptop Inventory CSV write
 for i in partlist:
     if i[2] == 'laptop':
         laptoplist.append(i)
@@ -59,6 +64,8 @@ with open('LaptopInventory.csv', "w") as f:
         laptoplist = csv.writer(f)
         laptoplist.writerow(row)
 
+
+# Phone Inventory CSV write
 for i in partlist:
     if i[2] == 'phone':
         phonelist.append(i)
@@ -68,6 +75,8 @@ with open('PhoneInventory.csv', "w") as f:
         phonelist = csv.writer(f)
         phonelist.writerow(row)
 
+
+# Tower Inventory CSV write
 for i in partlist:
     if i[2] == 'tower':
         towerlist.append(i)
@@ -77,30 +86,54 @@ with open('TowerInventory.csv', "w") as f:
         towerlist = csv.writer(f)
         towerlist.writerow(row)
 
+
+
 # 1.C) Past Service Date CSV
 
-today = datetime.datetime.now()
 
-# print(now)
+# datetime today's date
+today = datetime.today()
+date_time = today.strftime("%m/%d/%Y")
+
+# Converts full_list to dataframe
+FullFrame = DataFrame(full_list,columns=['ID','Brand','Type','Price','Service Date','Status'])
+
+# Converts Service Date column into date time
+FullFrame['Service Date'] = pd.to_datetime(FullFrame['Service Date'])
 
 
-date_list=[]
+# Full Dictionary for Query by converting dataframe to Dictionary
+FullDict = FullFrame.to_dict('list')
 
-date_list = datetime.datetime.strptime(full_list[4], "%m/%d/%y").date_list()
 
+# Filters FullFrame if Service Date is before today's date (expired)
+Expired = FullFrame.loc[FullFrame['Service Date'] < today]
+# Sorts Expired by descending Service Date
+Expired = Expired.sort_values(by=['Service Date'], ascending=False)
+# Converts Expired to pastdate_list
+pastdate_list = Expired.values.tolist()
 
-# print(date_list)
-# print(type(date_list[0][4]))
+#print(pastdate_list)
 
+# Past Service Date Inventory CSV Write
+with open('PastServiceDateInventory.csv', "w") as f:
+    for row in pastdate_list:
+        pastdate_list = csv.writer(f)
+        pastdate_list.writerow(row)
 
 # 1.D) Damaged Inventory CSV
-# dmglist = []
-#
-# for i in full_list:
-#     if i[5] == 'damaged':
-#         dmglist.append(i)
-# dmglist.sort(key=lambda x: x[3])
-# with open('DamagedInventory.csv', "w") as f:
-#     for row in dmglist:
-#         dmglist = csv.writer(f)
-#         dmglist.writerow(row)
+dmglist = []
+
+for i in full_list:
+    if i[5] == 'damaged':
+        dmglist.append(i)
+dmglist.sort(key=lambda x: x[3])
+with open('DamagedInventory.csv', "w") as f:
+    for row in dmglist:
+        dmglist = csv.writer(f)
+        dmglist.writerow(row)
+
+
+# 2.A) Query
+
+print(FullDict)
